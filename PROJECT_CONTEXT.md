@@ -43,8 +43,9 @@ found, (3) an exact list of every change made, so they can trust the result.
   LandUse may describe current use, SoldAsVacant the status at sale).
 - Suspicious values (flag only): SalePrice min 50, max 54,278,060 (mean 327k, median 205k);
   Bedrooms min 0; Acreage max 160.06 (median 0.27); YearBuilt min 1799.
-- Flag_UnusualYearBuilt (after Step 6): 175 rows, SoldAsVacant No 125 / Yes 50 (29% vs about 8%
-  baseline). Partial support only for the "vacant land built later" hypothesis.
+- Flag_UnusualYearBuilt (after Step 6): 175 rows. SoldAsVacant No 125 / Yes 50. Yes rate among
+  rows WITH a build year is 1.8% (8.3% overall), so 29% is about 16x higher. Year gap: 2 years 147,
+  3 years 27, 4 years 1. Among the 125 "No" rows: 87 SINGLE FAMILY, 29 VACANT RESIDENTIAL LAND..
 
 ## Decisions
 - Do NOT impute structural missing values. Add HasAssessorData flag instead.
@@ -64,6 +65,20 @@ found, (3) an exact list of every change made, so they can trust the result.
    multi-unit parcels, spelling variants). Left unchanged. The 29 filled addresses assume the
    parcel's single known address is correct.
    
+   
+## Report text (use verbatim in the data quality report)
+
+### Flag_UnusualYearBuilt
+Flag_UnusualYearBuilt marks 175 rows where the recorded build year is more than one year after
+the sale year. In 174 of them (99%) the gap is 2-3 years (one row has 4), which looks like a
+normal construction timeline rather than random typing errors. 50 of the 175 (29%) were sold as
+vacant land, compared with 1.8% among all rows that have a build year (about 16 times higher).
+Another 29 rows were not marked as sold vacant but are classified as vacant residential land,
+so at least 79 rows (about 45%) show a vacant-land signal. Of the remaining rows, 87 are
+single-family homes; the data cannot tell us whether they were sold during construction or
+recorded differently. Rows are flagged for review, not changed or removed.
+
+
 ## PLAN (each step: Do / Expected / Validate)
 
 ### Step 0 - Setup
