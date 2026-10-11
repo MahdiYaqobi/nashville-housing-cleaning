@@ -58,7 +58,10 @@ found, (3) an exact list of every change made, so they can trust the result.
 3. SoldAsVacant vs LandUse mismatch pattern (see above) is unexplained.
 4. Meaning of very low SalePrice values (e.g. 50) is unknown (non-market transfer?).
 5. Assessor data absent in about 54% of rows; reason unknown.
-
+6. 243 ParcelIDs map to more than one PropertyAddress (possible causes: ParcelID errors,
+   multi-unit parcels, spelling variants). Left unchanged. The 29 filled addresses assume the
+   parcel's single known address is correct.
+   
 ## PLAN (each step: Do / Expected / Validate)
 
 ### Step 0 - Setup
@@ -85,9 +88,12 @@ Do: 'Y' -> 'Yes', 'N' -> 'No'. Expected: 451 rows changed; Yes 4,675; No 51,802.
 Validate: set of values == {'Yes', 'No'}; no nulls introduced.
 
 ### Step 3 - Fill PropertyAddress via ParcelID
-Pre-check: each ParcelID has exactly ONE distinct non-null PropertyAddress (after step 1).
-If not, STOP. Do: fill the 29 null rows only. Expected: 29 rows changed.
-Validate: PropertyAddress nulls == 0.
+Scoped pre-check: the ParcelIDs of the 29 null rows must each have exactly ONE distinct known
+PropertyAddress. (Verified: all 29 do.) Do NOT require this of all parcels.
+Finding (do NOT fix): 243 ParcelIDs overall have more than one distinct PropertyAddress
+(241 with 2, 2 with 3; about 167 remain after aggressive normalization). Save evidence to
+reports/parcel_address_conflicts.csv. None of the 29 null-row parcels is among them.
+Do: fill the 29 null rows only. Expected: 29 rows changed; nulls == 0; no known address modified.
 
 ### Step 4 - Split addresses (keep originals)
 Do: PropertySplitAddress, PropertySplitCity (split on comma, expect 2 parts);
@@ -96,12 +102,16 @@ Rows with an unexpected number of parts: STOP and show me.
 Validate: split columns non-null wherever the source is non-null; Owner split nulls == 30,462.
 
 ### Step 5 - Duplicates
-Key: [ParcelID, PropertyAddress, SaleDate, SalePrice, LegalReference], recomputed on df_clean
-(after steps 1-3). Expected on raw: 103 extra rows in 103 groups of 2. If the recomputed
-count is not 103, or any group size is not 2: STOP and show me before dropping.
-Do: keep the lowest UniqueID per group; log the odd pair as an assumption.
-Validate: 103 rows removed; final rows 56,374; 11912 present and 12629 absent;
-zero duplicates on the key.
+Key: [ParcelID, PropertyAddress, SaleDate, SalePrice, LegalReference], computed on df_clean
+(after steps 1-3). Verified: on the raw data there were 206 rows (103 groups of 2). After
+Step 3 there are 208 rows (104 groups of 2): Step 3 revealed one hidden duplicate pair
+(UniqueID 26162 and 27140, ParcelID '092 06 0 282.00', 815 31ST AVE N, NASHVILLE; one copy
+had a missing address). 206 of the 208 rows are identical except UniqueID; the other 2 are
+the odd pair (11912 vs 12629, differ in LandUse).
+Pre-check (STOP if any fails): 208 duplicate rows, 104 groups, every group of size 2.
+Do: keep the lowest UniqueID per group (log the odd pair as an assumption).
+Validate: 104 rows removed; final rows 56,373; 11912 and 26162 present; 12629 and 27140
+absent; zero duplicates left on the key.
 
 ### Step 6 - Flag suspicious values (no deletions)
 Do: PROPOSE thresholds from the distributions first (wait for my approval), then add boolean
@@ -109,9 +119,17 @@ columns: Flag_LowSalePrice, Flag_ZeroBedrooms, Flag_LargeAcreage, Flag_UnusualYe
 Validate: row count unchanged; flag columns are boolean; counts logged.
 
 ### Step 7 - HasAssessorData
-Do: boolean column, True where all six structural columns are non-null. No imputation.
-Expected: False count == df_clean['TotalValue'].isna().sum() (30,462 minus removed duplicates
-that had no assessor data; measure and report the exact number).
+Do: add boolean column HasAssessorData = True where all six structural columns
+(OwnerAddress, Acreage, LandValue, BuildingValue, TotalValue, TaxDistrict) are non-null.
+No imputation. The flag covers ONLY these six columns; Bedrooms, YearBuilt, FullBath,
+HalfBath and OwnerName are missing in even more rows and are NOT covered by it
+(state this in the report).
+Pre-check (STOP if it fails): the six columns have identical null counts
+(the all-or-none pattern must still hold after Step 5).
+Expected: False count == df_clean['TotalValue'].isna().sum(). It must be between 30,358 and
+30,462 (30,462 minus at most the 104 rows removed in Step 5); measure and report the exact number.
+Validate: dtype bool; row count unchanged (56,373); null counts of the six columns unchanged
+by this step; True count + False count == 56,373.
 
 ### Step 8 - Final validation
 Use the /validate skill. Every check must PASS or be explained.
