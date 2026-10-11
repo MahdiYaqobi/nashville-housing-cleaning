@@ -43,6 +43,8 @@ found, (3) an exact list of every change made, so they can trust the result.
   LandUse may describe current use, SoldAsVacant the status at sale).
 - Suspicious values (flag only): SalePrice min 50, max 54,278,060 (mean 327k, median 205k);
   Bedrooms min 0; Acreage max 160.06 (median 0.27); YearBuilt min 1799.
+- Flag_UnusualYearBuilt (after Step 6): 175 rows, SoldAsVacant No 125 / Yes 50 (29% vs about 8%
+  baseline). Partial support only for the "vacant land built later" hypothesis.
 
 ## Decisions
 - Do NOT impute structural missing values. Add HasAssessorData flag instead.
@@ -114,9 +116,19 @@ Validate: 104 rows removed; final rows 56,373; 11912 and 26162 present; 12629 an
 absent; zero duplicates left on the key.
 
 ### Step 6 - Flag suspicious values (no deletions)
-Do: PROPOSE thresholds from the distributions first (wait for my approval), then add boolean
-columns: Flag_LowSalePrice, Flag_ZeroBedrooms, Flag_LargeAcreage, Flag_UnusualYearBuilt.
-Validate: row count unchanged; flag columns are boolean; counts logged.
+Thresholds approved (chosen from distributions on df_clean after Step 5, 56,373 rows):
+- Flag_LowSalePrice: SalePrice < 10,000 (expected 94 rows)
+- Flag_ZeroBedrooms: Bedrooms == 0 AND LandUse in {SINGLE FAMILY, RESIDENTIAL CONDO, CONDO,
+  DUPLEX, TRIPLEX, QUADPLEX, ZERO LOT LINE, MOBILE HOME} (expected between 4 and 12 rows;
+  the other 31+ rows with Bedrooms == 0 are mostly churches and vacant land: legitimate)
+- Flag_LargeAcreage: Acreage > 10 (expected 48 rows)
+- Flag_UnusualYearBuilt: YearBuilt > sale year + 1 (expected 175 rows). Old houses are not
+  flagged. Many of these rows may be land sold vacant and built later (see SoldAsVacant).
+Rules: NaN comparisons give False ("not flagged", NOT "verified"). Flags mean "review this",
+not "this is an error". Do not delete any row. Add a high-price flag only if I ask.
+Validate: row count unchanged (56,373); four boolean columns; counts match expected;
+log one change_log row per flag (rows_affected = number of flagged rows).
+Informational (no assert): SoldAsVacant breakdown of Flag_UnusualYearBuilt rows.
 
 ### Step 7 - HasAssessorData
 Do: add boolean column HasAssessorData = True where all six structural columns
