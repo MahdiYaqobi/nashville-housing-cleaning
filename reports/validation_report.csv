@@ -1,0 +1,13 @@
+check,expected,actual,status
+"Raw integrity & shape (56477, 19)",True,True,PASS
+Row accounting (len(df_raw) - removed == len(df_clean)),56373,56373,PASS
+Column accounting (originals present + expected added),True,True,PASS
+Nulls: PropertyAddress should be 0,0,0,PASS
+Dtypes validation (boolean flags),True,True,PASS
+Categoricals: SoldAsVacant strictly Yes/No,True,True,PASS
+Categoricals: LandUse distinct count == 37,37,37,PASS
+"Text hygiene: PropertyAddress, OwnerAddress, LandUse clean",True,True,PASS
+Duplicates: zero on business key,0,0,PASS
+"Duplicates: UniqueID 11912 present, 12629 absent","11912 present, 12629 absent","11912 present=True, 12629 present=False",PASS
+Flags: boolean dtype and row count unchanged (56373),True,True,PASS
+"Flag counts match expected (LowSalePrice=94, LargeAcreage=48, UnusualYearBuilt=175)","(94, 48, 175)","(94, 48, 175)",PASS

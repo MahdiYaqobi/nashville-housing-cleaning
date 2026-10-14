@@ -1,0 +1,18 @@
+id,columns,issue_type,evidence,rows_affected,pct_rows,severity,action_taken,needs_client_decision
+I01,SoldAsVacant,Inconsistent labels,'Y'/'N' used next to 'Yes'/'No',451,0.8,Medium,Standardized to Yes/No,False
+I02,PropertyAddress,Extra spaces,Repeated or leading/trailing spaces,55863,98.91,Low,Trimmed and collapsed spaces,False
+I03,OwnerAddress,Extra spaces,Repeated spaces,25315,44.82,Low,Trimmed and collapsed spaces,False
+I04,LandUse,Misspelled or split labels,"'VACANT RES LAND', 'VACANT RESIENTIAL LAND', 'RESTURANT/CAFETERIA', 'GRRENBELT' variant",1557,2.76,Medium,Mapped to one standard label each,False
+I05,PropertyAddress,Missing values,Empty address,29,0.05,Medium,Filled from the same ParcelID,False
+I06,"OwnerAddress, Acreage, LandValue, BuildingValue, TotalValue, TaxDistrict",Structural missing values,All six columns empty in exactly the same rows,30462,53.94,High,Not imputed; added HasAssessorData flag,True
+I07,"ParcelID, PropertyAddress, SaleDate, SalePrice, LegalReference",Duplicate sales,"Same parcel, address, date, price and legal reference",104,0.18,High,"Removed, keeping the lowest UniqueID",True
+I08,"ParcelID, PropertyAddress",Parcel with several addresses,243 ParcelIDs appear with more than one address,526,0.93,Medium,Not changed; evidence in parcel_address_conflicts.csv,True
+I09,LandUse,Possibly overlapping categories,'CONDO' and 'RESIDENTIAL CONDO' may be the same category,247,0.44,Low,Left separate,True
+I10,"LandUse, SoldAsVacant",Possible mismatch,Vacant-land LandUse but SoldAsVacant = No,1296,2.3,Low,Not changed; reported,True
+I11,Flag_LowSalePrice,Suspicious value,"SalePrice below 10,000",94,0.17,Low,"Flagged only, nothing removed",False
+I12,Flag_ZeroBedrooms,Suspicious value,Zero bedrooms on a residential land use,4,0.01,Low,"Flagged only, nothing removed",False
+I13,Flag_LargeAcreage,Suspicious value,Acreage above 10,48,0.09,Low,"Flagged only, nothing removed",False
+I14,Flag_UnusualYearBuilt,Suspicious value,Built more than 1 year after the sale year,175,0.31,Low,"Flagged only, nothing removed",False
+I15,"Bedrooms, YearBuilt, FullBath, HalfBath",Many missing values,Property details not recorded,32320,57.23,Medium,Not imputed; reported,True
+I16,UniqueID,Gaps in ID sequence,IDs missing between min and max (count of IDs),159,0.28,Low,Not changed; noted for the client,False
+I17,UniqueID,Column header has a trailing space,"Raw header is 'UniqueID ' (counts 1 column, not rows)",1,0.0,Low,Renamed to UniqueID,False

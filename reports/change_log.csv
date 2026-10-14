@@ -1,0 +1,19 @@
+step,description,rows_affected
+Step 1a,Strip and collapse whitespace in PropertyAddress,55863
+Step 1a,Strip and collapse whitespace in OwnerAddress,25315
+Step 1b,LandUse: strip and collapse whitespace,38
+Step 1b,LandUse: 'VACANT RES LAND' -> 'VACANT RESIDENTIAL LAND',1549
+Step 1b,LandUse: 'VACANT RESIENTIAL LAND' -> 'VACANT RESIDENTIAL LAND',3
+Step 1b,LandUse: 'RESTURANT/CAFETERIA' -> 'RESTAURANT/CAFETERIA',2
+Step 1b,LandUse: 'GRRENBELT...' -> 'GREENBELT/RES',3
+Step 1c,Rename column header 'UniqueID ' (trailing space) -> 'UniqueID' (1 column),1
+Step 2,"SoldAsVacant: 'Y' -> 'Yes', 'N' -> 'No'",451
+Step 3,Fill missing PropertyAddress via ParcelID (29 rows),29
+Step 4,Split PropertyAddress into PropertySplitAddress and PropertySplitCity,56477
+Step 4,"Split OwnerAddress into OwnerSplitAddress, City, State",26015
+Step 5,Remove business-key duplicates (kept lowest UniqueID),104
+Step 6,Flag low sale price (< 10000),94
+Step 6,Flag zero bedrooms in residential properties,4
+Step 6,Flag large acreage (> 10),48
+Step 6,Flag unusual year built (after sale date + 1),175
+Step 7,Add HasAssessorData boolean flag,30404
